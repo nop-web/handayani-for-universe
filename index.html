@@ -123,7 +123,6 @@
     
     <div id="info">
         <h1>💕 for Sri Handa Yani</h1>
-        
     </div>
     
     <div id="canvas-container"></div>
@@ -134,34 +133,27 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
     <script>
-        // ============================================
-        // FOTO DARI FOLDER LOKAL
-        // ============================================
         const imageUrls = [
-            'foto/foto1.jpg',
-            'foto/foto2.jpg',
-            'foto/foto3.jpg',
-            'foto/foto4.jpg',
-            'foto/foto5.jpg',
-            'foto/foto6.jpg',
-            'foto/foto7.jpg',
-            'foto/foto8.jpg',
-            'foto/foto9.jpg',
-            'foto/foto10.jpg'
+            'foto1.jpg',
+            'foto2.jpg',
+            'foto3.jpg',
+            'foto4.jpg',
+            'foto5.jpg',
+            'foto6.jpg',
+            'foto7.jpg',
+            'foto8.jpg',
+            'foto9.jpg',
+            'foto10.jpg'
         ];
         
-        // Musik lokal
-        const musicUrl = 'musik/musik.mp3';
+        const musicUrl = 'musik.mp3';
         
         let scene, camera, renderer, controls;
         let sun, sunGroup, photoMeshes = [];
-        let particles;
+        let starMesh;
         let audio;
-        let loadedCount = 0;
-        const totalImages = 100;
         let apologyTexts = [];
         
-        // Kata-kata imut buat Handayani (santai, gak baku)
         const apologyWords = [
             "Maafin Aku Yaa",
             "Aku Sayang Kamu",
@@ -186,21 +178,18 @@
         ];
         
         function init() {
-            // Scene setup
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.0005);
             
-            // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
             camera.position.set(0, 50, 150);
             
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = false;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
             
-            // Controls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
@@ -209,7 +198,6 @@
             controls.autoRotate = true;
             controls.autoRotateSpeed = 0.5;
             
-            // Lighting
             const ambientLight = new THREE.AmbientLight(0x404040, 2);
             scene.add(ambientLight);
             
@@ -217,32 +205,20 @@
             pointLight.position.set(0, 0, 0);
             scene.add(pointLight);
             
-            // Create Cute Pink Sun
             createCutePinkSun();
-            
-            // Create Galaxy Background
             createStarfield();
-            
-            // Create Apology Texts Orbiting the Sun
             createOrbitingApologyTexts();
-            
-            // Create Photo Galaxy
             createPhotoGalaxy();
             
-            // Handle resize
             window.addEventListener('resize', onWindowResize, false);
             
-            // Start animation
             animate();
         }
         
         function createCutePinkSun() {
             sunGroup = new THREE.Group();
             
-            // Main sun body - lebih kecil dan imut
-            const geometry = new THREE.SphereGeometry(12, 64, 64);
-            
-            // Material yang lebih glowing dan soft
+            const geometry = new THREE.SphereGeometry(12, 32, 32);
             const material = new THREE.MeshBasicMaterial({
                 color: 0xff69b4,
                 transparent: true,
@@ -252,8 +228,7 @@
             sun = new THREE.Mesh(geometry, material);
             sunGroup.add(sun);
             
-            // Inner glow (lebih terang)
-            const innerGlowGeo = new THREE.SphereGeometry(14, 32, 32);
+            const innerGlowGeo = new THREE.SphereGeometry(14, 16, 16);
             const innerGlowMat = new THREE.MeshBasicMaterial({
                 color: 0xff1493,
                 transparent: true,
@@ -262,8 +237,7 @@
             const innerGlow = new THREE.Mesh(innerGlowGeo, innerGlowMat);
             sunGroup.add(innerGlow);
             
-            // Middle glow
-            const midGlowGeo = new THREE.SphereGeometry(18, 32, 32);
+            const midGlowGeo = new THREE.SphereGeometry(18, 16, 16);
             const midGlowMat = new THREE.MeshBasicMaterial({
                 color: 0xff69b4,
                 transparent: true,
@@ -272,8 +246,7 @@
             const midGlow = new THREE.Mesh(midGlowGeo, midGlowMat);
             sunGroup.add(midGlow);
             
-            // Outer glow (lebih besar dan soft)
-            const outerGlowGeo = new THREE.SphereGeometry(25, 32, 32);
+            const outerGlowGeo = new THREE.SphereGeometry(25, 16, 16);
             const outerGlowMat = new THREE.MeshBasicMaterial({
                 color: 0xffb6c1,
                 transparent: true,
@@ -282,8 +255,7 @@
             const outerGlow = new THREE.Mesh(outerGlowGeo, outerGlowMat);
             sunGroup.add(outerGlow);
             
-            // Tambahkan "cheeks" (pipi merah imut)
-            const cheekGeo = new THREE.SphereGeometry(2, 16, 16);
+            const cheekGeo = new THREE.SphereGeometry(2, 8, 8);
             const cheekMat = new THREE.MeshBasicMaterial({
                 color: 0xffa0b0,
                 transparent: true,
@@ -298,8 +270,7 @@
             rightCheek.position.set(4, -2, 10);
             sunGroup.add(rightCheek);
             
-            // Tambahkan mata (bintang kecil)
-            const eyeGeo = new THREE.SphereGeometry(1, 16, 16);
+            const eyeGeo = new THREE.SphereGeometry(1, 8, 8);
             const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             
             const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
@@ -310,8 +281,7 @@
             rightEye.position.set(3, 2, 11);
             sunGroup.add(rightEye);
             
-            // Pupil
-            const pupilGeo = new THREE.SphereGeometry(0.5, 16, 16);
+            const pupilGeo = new THREE.SphereGeometry(0.5, 8, 8);
             const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
             
             const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
@@ -322,13 +292,12 @@
             rightPupil.position.set(3, 2, 11.5);
             sunGroup.add(rightPupil);
             
-            // Tambahkan senyum
             const smileCurve = new THREE.EllipseCurve(
-                0, -4,            // ax, aY
-                3, 1.5,           // xRadius, yRadius
-                0, Math.PI,       // aStartAngle, aEndAngle
-                false,            // aClockwise
-                0                 // aRotation
+                0, -4,
+                3, 1.5,
+                0, Math.PI,
+                false,
+                0
             );
             
             const smilePoints = smileCurve.getPoints(50);
@@ -338,9 +307,8 @@
             smile.position.z = 11;
             sunGroup.add(smile);
             
-            // Tambahkan love bubbles yang melayang
             for (let i = 0; i < 8; i++) {
-                const bubbleGeo = new THREE.SphereGeometry(0.5 + Math.random() * 0.5, 16, 16);
+                const bubbleGeo = new THREE.SphereGeometry(0.5 + Math.random() * 0.5, 8, 8);
                 const bubbleMat = new THREE.MeshBasicMaterial({
                     color: 0xff69b4,
                     transparent: true,
@@ -366,30 +334,60 @@
             scene.add(sunGroup);
         }
         
+        function createStarfield() {
+            const geometry = new THREE.SphereGeometry(0.5, 4, 4);
+            const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            starMesh = new THREE.InstancedMesh(geometry, material, 3000);
+            
+            const dummy = new THREE.Object3D();
+            const colors = [];
+            
+            for (let i = 0; i < 3000; i++) {
+                const radius = 200 + Math.random() * 600;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                dummy.position.set(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.sin(phi) * Math.sin(theta),
+                    radius * Math.cos(phi)
+                );
+                dummy.scale.setScalar(0.5 + Math.random() * 1.5);
+                dummy.updateMatrix();
+                starMesh.setMatrixAt(i, dummy.matrix);
+                
+                const color = new THREE.Color();
+                const colorChoice = Math.random();
+                if (colorChoice < 0.3) color.setRGB(1, 0.4, 0.7);
+                else if (colorChoice < 0.6) color.setRGB(1, 0.7, 0.8);
+                else color.setRGB(1, 1, 1);
+                starMesh.setColorAt(i, color);
+            }
+            
+            starMesh.instanceMatrix.needsUpdate = true;
+            starMesh.instanceColor.needsUpdate = true;
+            scene.add(starMesh);
+        }
+        
         function createOrbitingApologyTexts() {
-            // Buat canvas texture untuk setiap kata maaf
             apologyWords.forEach((word, index) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = 512;
                 canvas.height = 128;
                 
-                // Background transparan
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Style teks yang glowing dan romantis
                 ctx.font = 'bold 48px "Segoe UI", Arial, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Glow effect
                 ctx.shadowColor = '#ff69b4';
                 ctx.shadowBlur = 20;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
                 
-                // Warna gradien pink
                 const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
                 gradient.addColorStop(0, '#ff69b4');
                 gradient.addColorStop(0.5, '#ffb6c1');
@@ -398,17 +396,14 @@
                 
                 ctx.fillText(word, canvas.width / 2, canvas.height / 2);
                 
-                // Tambahkan outline putih
                 ctx.shadowBlur = 0;
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
                 ctx.lineWidth = 2;
                 ctx.strokeText(word, canvas.width / 2, canvas.height / 2);
                 
-                // Create texture dari canvas
                 const texture = new THREE.CanvasTexture(canvas);
                 texture.needsUpdate = true;
                 
-                // Create sprite material
                 const material = new THREE.SpriteMaterial({
                     map: texture,
                     transparent: true,
@@ -418,19 +413,16 @@
                 
                 const sprite = new THREE.Sprite(material);
                 
-                // Posisikan dalam orbit di sekitar matahari
-                const orbitRadius = 35 + Math.random() * 15; // Radius orbit antara 35-50
+                const orbitRadius = 35 + Math.random() * 15;
                 const angle = (index / apologyWords.length) * Math.PI * 2;
-                const height = (Math.random() - 0.5) * 20; // Variasi tinggi
+                const height = (Math.random() - 0.5) * 20;
                 
                 sprite.position.x = Math.cos(angle) * orbitRadius;
                 sprite.position.z = Math.sin(angle) * orbitRadius;
                 sprite.position.y = height;
                 
-                // Scale sprite
                 sprite.scale.set(20, 5, 1);
                 
-                // Simpan data untuk animasi
                 sprite.userData = {
                     orbitRadius: orbitRadius,
                     angle: angle,
@@ -445,55 +437,26 @@
             });
         }
         
-        function createStarfield() {
-            const geometry = new THREE.BufferGeometry();
-            const count = 3000;
-            const positions = new Float32Array(count * 3);
-            const colors = new Float32Array(count * 3);
+        function resizeTexture(texture, maxSize = 256) {
+            const image = texture.image;
+            if (!image) return texture;
             
-            for (let i = 0; i < count; i++) {
-                const i3 = i * 3;
-                const radius = 200 + Math.random() * 600;
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                
-                positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i3 + 2] = radius * Math.cos(phi);
-                
-                // Pink/white star colors
-                const colorChoice = Math.random();
-                if (colorChoice < 0.3) {
-                    colors[i3] = 1; colors[i3 + 1] = 0.4; colors[i3 + 2] = 0.7; // Pink
-                } else if (colorChoice < 0.6) {
-                    colors[i3] = 1; colors[i3 + 1] = 0.7; colors[i3 + 2] = 0.8; // Light pink
-                } else {
-                    colors[i3] = 1; colors[i3 + 1] = 1; colors[i3 + 2] = 1; // White
-                }
+            if (image.width > maxSize || image.height > maxSize) {
+                const canvas = document.createElement('canvas');
+                const scale = maxSize / Math.max(image.width, image.height);
+                canvas.width = Math.floor(image.width * scale);
+                canvas.height = Math.floor(image.height * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                const newTexture = new THREE.CanvasTexture(canvas);
+                newTexture.needsUpdate = true;
+                return newTexture;
             }
-            
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
-            const material = new THREE.PointsMaterial({
-                size: 2,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
+            return texture;
         }
         
         function createPhotoGalaxy() {
             const textureLoader = new THREE.TextureLoader();
-            
-            const totalPhotos = 100;
-            let loadedImages = 0;
-            
-            // Pre-load semua texture terlebih dahulu
             const textures = [];
             let texturesLoaded = 0;
             
@@ -501,10 +464,9 @@
                 textureLoader.load(
                     url,
                     (texture) => {
-                        textures[index] = texture;
+                        textures[index] = resizeTexture(texture, 256);
                         texturesLoaded++;
                         
-                        // Jika semua texture sudah loaded, buat foto-fotonya
                         if (texturesLoaded === imageUrls.length) {
                             createPhotosFromTextures(textures);
                             document.getElementById('loading').style.display = 'none';
@@ -514,7 +476,6 @@
                     (error) => {
                         console.error('Error loading texture:', error);
                         texturesLoaded++;
-                        // Tetap lanjut meskipun ada error
                         if (texturesLoaded === imageUrls.length) {
                             createPhotosFromTextures(textures);
                             document.getElementById('loading').style.display = 'none';
@@ -525,7 +486,7 @@
         }
         
         function createPhotosFromTextures(textures) {
-            const totalPhotos = 100;
+            const totalPhotos = 30;
             
             for (let i = 0; i < totalPhotos; i++) {
                 const textureIndex = i % 10;
@@ -533,11 +494,9 @@
                 
                 if (!texture) continue;
                 
-                // Clone texture untuk setiap foto
                 const clonedTexture = texture.clone();
                 clonedTexture.needsUpdate = true;
                 
-                // Create photo frame dengan ukuran yang lebih besar
                 const aspect = clonedTexture.image ? (clonedTexture.image.width / clonedTexture.image.height) : 1;
                 const width = 10;
                 const height = width / aspect;
@@ -551,16 +510,14 @@
                 
                 const photo = new THREE.Mesh(geometry, material);
                 
-                // Position in spiral galaxy pattern
                 const angle = (i / totalPhotos) * Math.PI * 8;
-                const radius = 60 + (i / totalPhotos) * 120; // Mulai dari radius 60 agar tidak bertabrakan dengan teks
+                const radius = 60 + (i / totalPhotos) * 120;
                 const yOffset = (i - totalPhotos / 2) * 4 + Math.sin(angle) * 15;
                 
                 photo.position.x = Math.cos(angle) * radius;
                 photo.position.z = Math.sin(angle) * radius;
                 photo.position.y = yOffset;
                 
-                // Store original position for animation
                 photo.userData = {
                     originalY: yOffset,
                     angle: angle,
@@ -569,13 +526,11 @@
                     floatOffset: Math.random() * Math.PI * 2
                 };
                 
-                // Look at center
                 photo.lookAt(0, 0, 0);
                 
                 scene.add(photo);
                 photoMeshes.push(photo);
                 
-                // Add romantic glow around photo
                 const glowGeo = new THREE.PlaneGeometry(width + 2, height + 2);
                 const glowMat = new THREE.MeshBasicMaterial({
                     color: 0xff69b4,
@@ -589,10 +544,8 @@
                 glow.lookAt(0, 0, 0);
                 scene.add(glow);
                 
-                // Link glow to photo for animation
                 photo.userData.glow = glow;
                 
-                // Tambahkan bingkai foto (frame)
                 const frameGeo = new THREE.PlaneGeometry(width + 0.5, height + 0.5);
                 const frameMat = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
@@ -615,93 +568,87 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
         
-        function animate() {
+        let lastTime = 0;
+        const targetFPS = 30;
+        const frameInterval = 1000 / targetFPS;
+        let frameCount = 0;
+        
+        function animate(currentTime) {
             requestAnimationFrame(animate);
             
-            const time = Date.now() * 0.001;
+            if (currentTime - lastTime < frameInterval) return;
+            lastTime = currentTime;
             
-            // Animate sun group (berputar perlahan)
+            const time = currentTime * 0.001;
+            frameCount++;
+            
             if (sunGroup) {
                 sunGroup.rotation.y += 0.002;
                 
-                // Animate bubbles
-                sunGroup.children.forEach((child, index) => {
+                sunGroup.children.forEach((child) => {
                     if (child.userData && child.userData.speed) {
-                        child.position.y = child.userData.originalY + Math.sin(time * child.userData.speed + child.userData.offset) * 3;
-                        child.scale.setScalar(1 + Math.sin(time * 2 + child.userData.offset) * 0.2);
+                        child.position.y = child.userData.originalY + 
+                            Math.sin(time * child.userData.speed + child.userData.offset) * 3;
+                        const scale = 1 + Math.sin(time * 2 + child.userData.offset) * 0.2;
+                        child.scale.setScalar(scale);
                     }
                 });
             }
             
-            // Animate apology texts (berputar mengelilingi matahari)
             apologyTexts.forEach((sprite) => {
                 if (sprite.userData) {
-                    // Update angle untuk rotasi orbit
                     sprite.userData.angle += sprite.userData.speed;
-                    
-                    // Posisi baru dalam orbit
                     sprite.position.x = Math.cos(sprite.userData.angle) * sprite.userData.orbitRadius;
                     sprite.position.z = Math.sin(sprite.userData.angle) * sprite.userData.orbitRadius;
-                    
-                    // Floating motion di sumbu Y
-                    sprite.position.y = sprite.userData.originalY + Math.sin(time * sprite.userData.floatSpeed + sprite.userData.floatOffset) * 3;
-                    
-                    // Selalu menghadap kamera
+                    sprite.position.y = sprite.userData.originalY + 
+                        Math.sin(time * sprite.userData.floatSpeed + sprite.userData.floatOffset) * 3;
                     sprite.lookAt(camera.position);
                     
-                    // Fade in/out berdasarkan posisi (efek lebih terang saat di depan)
                     const normalizedZ = sprite.position.z / sprite.userData.orbitRadius;
                     sprite.material.opacity = 0.6 + (normalizedZ + 1) * 0.2;
                 }
             });
             
-            // Animate photos
-            photoMeshes.forEach((photo, index) => {
-                if (photo.userData) {
-                    // Floating motion
-                    photo.position.y = photo.userData.originalY + Math.sin(time * 0.5 + photo.userData.floatOffset) * 3;
-                    
-                    // Slow rotation around sun
-                    photo.userData.angle += photo.userData.speed;
-                    photo.position.x = Math.cos(photo.userData.angle) * photo.userData.radius;
-                    photo.position.z = Math.sin(photo.userData.angle) * photo.userData.radius;
-                    
-                    // Always face camera
-                    photo.lookAt(camera.position);
-                    
-                    // Update glow position
-                    if (photo.userData.glow) {
-                        photo.userData.glow.position.copy(photo.position);
-                        photo.userData.glow.position.z -= 0.1;
-                        photo.userData.glow.lookAt(camera.position);
+            if (frameCount % 2 === 0) {
+                photoMeshes.forEach((photo) => {
+                    if (photo.userData) {
+                        photo.position.y = photo.userData.originalY + 
+                            Math.sin(time * 0.5 + photo.userData.floatOffset) * 3;
+                        
+                        photo.userData.angle += photo.userData.speed * 2;
+                        photo.position.x = Math.cos(photo.userData.angle) * photo.userData.radius;
+                        photo.position.z = Math.sin(photo.userData.angle) * photo.userData.radius;
+                        
+                        photo.lookAt(camera.position);
+                        
+                        if (photo.userData.glow) {
+                            photo.userData.glow.position.copy(photo.position);
+                            photo.userData.glow.position.z -= 0.1;
+                            photo.userData.glow.lookAt(camera.position);
+                        }
+                        
+                        if (photo.userData.frame) {
+                            photo.userData.frame.position.copy(photo.position);
+                            photo.userData.frame.position.z -= 0.05;
+                            photo.userData.frame.lookAt(camera.position);
+                        }
                     }
-                    
-                    // Update frame position
-                    if (photo.userData.frame) {
-                        photo.userData.frame.position.copy(photo.position);
-                        photo.userData.frame.position.z -= 0.05;
-                        photo.userData.frame.lookAt(camera.position);
-                    }
-                }
-            });
+                });
+            }
             
-            // Rotate particles slowly
-            if (particles) {
-                particles.rotation.y += 0.0002;
+            if (starMesh) {
+                starMesh.rotation.y += 0.0002;
             }
             
             controls.update();
             renderer.render(scene, camera);
         }
         
-        // Start experience
         document.getElementById('start-overlay').addEventListener('click', function() {
             this.style.display = 'none';
             
-            // Initialize 3D scene
             init();
             
-            // Play music
             audio = new Audio(musicUrl);
             audio.loop = true;
             audio.volume = 0.5;
