@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maafin Aku Yaa Handayani 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #ffb6c1;
+            font-size: 14px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            pointer-events: none;
+        }
+        
+        #info h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #ff69b4;
+            text-shadow: 0 0 10px #ff69b4;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff69b4;
+            font-size: 24px;
+            z-index: 200;
+            text-align: center;
+        }
+        
+        .heart {
+            display: inline-block;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        #start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #1a0a1a 0%, #000000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            cursor: pointer;
+        }
+        
+        #start-overlay h2 {
+            color: #ff69b4;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ff69b4;
+        }
+        
+        #start-overlay p {
+            color: #ffb6c1;
+            font-size: 18px;
+        }
+        
+        #start-overlay .click-hint {
+            margin-top: 30px;
+            padding: 15px 30px;
+            border: 2px solid #ff69b4;
+            border-radius: 30px;
+            color: #ff69b4;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="heart">💕</div><br>
+        Loading Universe...
+    </div>
+    
+    <div id="start-overlay">
+        <h2>Maafin Aku Yaa Handayani</h2>
+        <p></p>
+        <div class="click-hint">klik apa bae</div>
+    </div>
+    
+    <div id="info">
+        <h1>💕 for Sri Handa Yani</h1>
+        
+    </div>
+    
+    <div id="canvas-container"></div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // ============================================
+        // FOTO DARI FOLDER LOKAL
+        // ============================================
+        const imageUrls = [
+            'foto/foto1.jpg',
+            'foto/foto2.jpg',
+            'foto/foto3.jpg',
+            'foto/foto4.jpg',
+            'foto/foto5.jpg',
+            'foto/foto6.jpg',
+            'foto/foto7.jpg',
+            'foto/foto8.jpg',
+            'foto/foto9.jpg',
+            'foto/foto10.jpg'
+        ];
+        
+        // Musik lokal
+        const musicUrl = 'musik/musik.mp3';
+        
+        let scene, camera, renderer, controls;
+        let sun, sunGroup, photoMeshes = [];
+        let particles;
+        let audio;
+        let loadedCount = 0;
+        const totalImages = 100;
+        let apologyTexts = [];
+        
+        // Kata-kata imut buat Handayani (santai, gak baku)
+        const apologyWords = [
+            "Maafin Aku Yaa",
+            "Aku Sayang Kamu",
+            "Handayani Cantik",
+            "Jangan Marah Lagi",
+            "Aku Kangen Kamu",
+            "Maaf Yah Sayang",
+            "Love You Handayani",
+            "Kamu Lucu Deh",
+            "Aku Salah Nih",
+            "Pipis Handayani",
+            "Maaf Yah Cantik",
+            "Jangan Ngambek",
+            "Aku Cinta Kamu",
+            "Handayani Ku",
+            "Maafin Yah Sayang",
+            "Kamu Manis Bgt",
+            "Aku Janji Baik",
+            "Love You Sayang",
+            "Handayani Imut",
+            "Maaf Yah Sayangku"
+        ];
+        
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.0005);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 50, 150);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 20;
+            controls.maxDistance = 500;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+            
+            const pointLight = new THREE.PointLight(0xff69b4, 3, 300);
+            pointLight.position.set(0, 0, 0);
+            scene.add(pointLight);
+            
+            // Create Cute Pink Sun
+            createCutePinkSun();
+            
+            // Create Galaxy Background
+            createStarfield();
+            
+            // Create Apology Texts Orbiting the Sun
+            createOrbitingApologyTexts();
+            
+            // Create Photo Galaxy
+            createPhotoGalaxy();
+            
+            // Handle resize
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Start animation
+            animate();
+        }
+        
+        function createCutePinkSun() {
+            sunGroup = new THREE.Group();
+            
+            // Main sun body - lebih kecil dan imut
+            const geometry = new THREE.SphereGeometry(12, 64, 64);
+            
+            // Material yang lebih glowing dan soft
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xff69b4,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            sun = new THREE.Mesh(geometry, material);
+            sunGroup.add(sun);
+            
+            // Inner glow (lebih terang)
+            const innerGlowGeo = new THREE.SphereGeometry(14, 32, 32);
+            const innerGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xff1493,
+                transparent: true,
+                opacity: 0.4
+            });
+            const innerGlow = new THREE.Mesh(innerGlowGeo, innerGlowMat);
+            sunGroup.add(innerGlow);
+            
+            // Middle glow
+            const midGlowGeo = new THREE.SphereGeometry(18, 32, 32);
+            const midGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xff69b4,
+                transparent: true,
+                opacity: 0.2
+            });
+            const midGlow = new THREE.Mesh(midGlowGeo, midGlowMat);
+            sunGroup.add(midGlow);
+            
+            // Outer glow (lebih besar dan soft)
+            const outerGlowGeo = new THREE.SphereGeometry(25, 32, 32);
+            const outerGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xffb6c1,
+                transparent: true,
+                opacity: 0.15
+            });
+            const outerGlow = new THREE.Mesh(outerGlowGeo, outerGlowMat);
+            sunGroup.add(outerGlow);
+            
+            // Tambahkan "cheeks" (pipi merah imut)
+            const cheekGeo = new THREE.SphereGeometry(2, 16, 16);
+            const cheekMat = new THREE.MeshBasicMaterial({
+                color: 0xffa0b0,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            const leftCheek = new THREE.Mesh(cheekGeo, cheekMat);
+            leftCheek.position.set(-4, -2, 10);
+            sunGroup.add(leftCheek);
+            
+            const rightCheek = new THREE.Mesh(cheekGeo, cheekMat);
+            rightCheek.position.set(4, -2, 10);
+            sunGroup.add(rightCheek);
+            
+            // Tambahkan mata (bintang kecil)
+            const eyeGeo = new THREE.SphereGeometry(1, 16, 16);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-3, 2, 11);
+            sunGroup.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(3, 2, 11);
+            sunGroup.add(rightEye);
+            
+            // Pupil
+            const pupilGeo = new THREE.SphereGeometry(0.5, 16, 16);
+            const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            
+            const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
+            leftPupil.position.set(-3, 2, 11.5);
+            sunGroup.add(leftPupil);
+            
+            const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
+            rightPupil.position.set(3, 2, 11.5);
+            sunGroup.add(rightPupil);
+            
+            // Tambahkan senyum
+            const smileCurve = new THREE.EllipseCurve(
+                0, -4,            // ax, aY
+                3, 1.5,           // xRadius, yRadius
+                0, Math.PI,       // aStartAngle, aEndAngle
+                false,            // aClockwise
+                0                 // aRotation
+            );
+            
+            const smilePoints = smileCurve.getPoints(50);
+            const smileGeo = new THREE.BufferGeometry().setFromPoints(smilePoints);
+            const smileMat = new THREE.LineBasicMaterial({ color: 0xff1493, linewidth: 3 });
+            const smile = new THREE.Line(smileGeo, smileMat);
+            smile.position.z = 11;
+            sunGroup.add(smile);
+            
+            // Tambahkan love bubbles yang melayang
+            for (let i = 0; i < 8; i++) {
+                const bubbleGeo = new THREE.SphereGeometry(0.5 + Math.random() * 0.5, 16, 16);
+                const bubbleMat = new THREE.MeshBasicMaterial({
+                    color: 0xff69b4,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const bubble = new THREE.Mesh(bubbleGeo, bubbleMat);
+                
+                const angle = (i / 8) * Math.PI * 2;
+                const radius = 20 + Math.random() * 10;
+                bubble.position.x = Math.cos(angle) * radius;
+                bubble.position.y = Math.sin(angle) * radius;
+                bubble.position.z = Math.sin(angle * 2) * 5;
+                
+                bubble.userData = {
+                    originalY: bubble.position.y,
+                    speed: 0.02 + Math.random() * 0.02,
+                    offset: Math.random() * Math.PI * 2
+                };
+                
+                sunGroup.add(bubble);
+            }
+            
+            scene.add(sunGroup);
+        }
+        
+        function createOrbitingApologyTexts() {
+            // Buat canvas texture untuk setiap kata maaf
+            apologyWords.forEach((word, index) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 512;
+                canvas.height = 128;
+                
+                // Background transparan
+                ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Style teks yang glowing dan romantis
+                ctx.font = 'bold 48px "Segoe UI", Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Glow effect
+                ctx.shadowColor = '#ff69b4';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Warna gradien pink
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+                gradient.addColorStop(0, '#ff69b4');
+                gradient.addColorStop(0.5, '#ffb6c1');
+                gradient.addColorStop(1, '#ff1493');
+                ctx.fillStyle = gradient;
+                
+                ctx.fillText(word, canvas.width / 2, canvas.height / 2);
+                
+                // Tambahkan outline putih
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.strokeText(word, canvas.width / 2, canvas.height / 2);
+                
+                // Create texture dari canvas
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                
+                // Create sprite material
+                const material = new THREE.SpriteMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 0.9,
+                    blending: THREE.AdditiveBlending
+                });
+                
+                const sprite = new THREE.Sprite(material);
+                
+                // Posisikan dalam orbit di sekitar matahari
+                const orbitRadius = 35 + Math.random() * 15; // Radius orbit antara 35-50
+                const angle = (index / apologyWords.length) * Math.PI * 2;
+                const height = (Math.random() - 0.5) * 20; // Variasi tinggi
+                
+                sprite.position.x = Math.cos(angle) * orbitRadius;
+                sprite.position.z = Math.sin(angle) * orbitRadius;
+                sprite.position.y = height;
+                
+                // Scale sprite
+                sprite.scale.set(20, 5, 1);
+                
+                // Simpan data untuk animasi
+                sprite.userData = {
+                    orbitRadius: orbitRadius,
+                    angle: angle,
+                    speed: 0.005 + Math.random() * 0.005,
+                    originalY: height,
+                    floatSpeed: 0.5 + Math.random() * 0.5,
+                    floatOffset: Math.random() * Math.PI * 2
+                };
+                
+                scene.add(sprite);
+                apologyTexts.push(sprite);
+            });
+        }
+        
+        function createStarfield() {
+            const geometry = new THREE.BufferGeometry();
+            const count = 3000;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                const radius = 200 + Math.random() * 600;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i3 + 2] = radius * Math.cos(phi);
+                
+                // Pink/white star colors
+                const colorChoice = Math.random();
+                if (colorChoice < 0.3) {
+                    colors[i3] = 1; colors[i3 + 1] = 0.4; colors[i3 + 2] = 0.7; // Pink
+                } else if (colorChoice < 0.6) {
+                    colors[i3] = 1; colors[i3 + 1] = 0.7; colors[i3 + 2] = 0.8; // Light pink
+                } else {
+                    colors[i3] = 1; colors[i3 + 1] = 1; colors[i3 + 2] = 1; // White
+                }
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+        }
+        
+        function createPhotoGalaxy() {
+            const textureLoader = new THREE.TextureLoader();
+            
+            const totalPhotos = 100;
+            let loadedImages = 0;
+            
+            // Pre-load semua texture terlebih dahulu
+            const textures = [];
+            let texturesLoaded = 0;
+            
+            imageUrls.forEach((url, index) => {
+                textureLoader.load(
+                    url,
+                    (texture) => {
+                        textures[index] = texture;
+                        texturesLoaded++;
+                        
+                        // Jika semua texture sudah loaded, buat foto-fotonya
+                        if (texturesLoaded === imageUrls.length) {
+                            createPhotosFromTextures(textures);
+                            document.getElementById('loading').style.display = 'none';
+                        }
+                    },
+                    undefined,
+                    (error) => {
+                        console.error('Error loading texture:', error);
+                        texturesLoaded++;
+                        // Tetap lanjut meskipun ada error
+                        if (texturesLoaded === imageUrls.length) {
+                            createPhotosFromTextures(textures);
+                            document.getElementById('loading').style.display = 'none';
+                        }
+                    }
+                );
+            });
+        }
+        
+        function createPhotosFromTextures(textures) {
+            const totalPhotos = 100;
+            
+            for (let i = 0; i < totalPhotos; i++) {
+                const textureIndex = i % 10;
+                const texture = textures[textureIndex];
+                
+                if (!texture) continue;
+                
+                // Clone texture untuk setiap foto
+                const clonedTexture = texture.clone();
+                clonedTexture.needsUpdate = true;
+                
+                // Create photo frame dengan ukuran yang lebih besar
+                const aspect = clonedTexture.image ? (clonedTexture.image.width / clonedTexture.image.height) : 1;
+                const width = 10;
+                const height = width / aspect;
+                
+                const geometry = new THREE.PlaneGeometry(width, height);
+                const material = new THREE.MeshBasicMaterial({
+                    map: clonedTexture,
+                    side: THREE.DoubleSide,
+                    transparent: true
+                });
+                
+                const photo = new THREE.Mesh(geometry, material);
+                
+                // Position in spiral galaxy pattern
+                const angle = (i / totalPhotos) * Math.PI * 8;
+                const radius = 60 + (i / totalPhotos) * 120; // Mulai dari radius 60 agar tidak bertabrakan dengan teks
+                const yOffset = (i - totalPhotos / 2) * 4 + Math.sin(angle) * 15;
+                
+                photo.position.x = Math.cos(angle) * radius;
+                photo.position.z = Math.sin(angle) * radius;
+                photo.position.y = yOffset;
+                
+                // Store original position for animation
+                photo.userData = {
+                    originalY: yOffset,
+                    angle: angle,
+                    radius: radius,
+                    speed: 0.0005 + Math.random() * 0.001,
+                    floatOffset: Math.random() * Math.PI * 2
+                };
+                
+                // Look at center
+                photo.lookAt(0, 0, 0);
+                
+                scene.add(photo);
+                photoMeshes.push(photo);
+                
+                // Add romantic glow around photo
+                const glowGeo = new THREE.PlaneGeometry(width + 2, height + 2);
+                const glowMat = new THREE.MeshBasicMaterial({
+                    color: 0xff69b4,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide
+                });
+                const glow = new THREE.Mesh(glowGeo, glowMat);
+                glow.position.copy(photo.position);
+                glow.position.z -= 0.1;
+                glow.lookAt(0, 0, 0);
+                scene.add(glow);
+                
+                // Link glow to photo for animation
+                photo.userData.glow = glow;
+                
+                // Tambahkan bingkai foto (frame)
+                const frameGeo = new THREE.PlaneGeometry(width + 0.5, height + 0.5);
+                const frameMat = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.8,
+                    side: THREE.BackSide
+                });
+                const frame = new THREE.Mesh(frameGeo, frameMat);
+                frame.position.copy(photo.position);
+                frame.position.z -= 0.05;
+                frame.lookAt(0, 0, 0);
+                scene.add(frame);
+                photo.userData.frame = frame;
+            }
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Animate sun group (berputar perlahan)
+            if (sunGroup) {
+                sunGroup.rotation.y += 0.002;
+                
+                // Animate bubbles
+                sunGroup.children.forEach((child, index) => {
+                    if (child.userData && child.userData.speed) {
+                        child.position.y = child.userData.originalY + Math.sin(time * child.userData.speed + child.userData.offset) * 3;
+                        child.scale.setScalar(1 + Math.sin(time * 2 + child.userData.offset) * 0.2);
+                    }
+                });
+            }
+            
+            // Animate apology texts (berputar mengelilingi matahari)
+            apologyTexts.forEach((sprite) => {
+                if (sprite.userData) {
+                    // Update angle untuk rotasi orbit
+                    sprite.userData.angle += sprite.userData.speed;
+                    
+                    // Posisi baru dalam orbit
+                    sprite.position.x = Math.cos(sprite.userData.angle) * sprite.userData.orbitRadius;
+                    sprite.position.z = Math.sin(sprite.userData.angle) * sprite.userData.orbitRadius;
+                    
+                    // Floating motion di sumbu Y
+                    sprite.position.y = sprite.userData.originalY + Math.sin(time * sprite.userData.floatSpeed + sprite.userData.floatOffset) * 3;
+                    
+                    // Selalu menghadap kamera
+                    sprite.lookAt(camera.position);
+                    
+                    // Fade in/out berdasarkan posisi (efek lebih terang saat di depan)
+                    const normalizedZ = sprite.position.z / sprite.userData.orbitRadius;
+                    sprite.material.opacity = 0.6 + (normalizedZ + 1) * 0.2;
+                }
+            });
+            
+            // Animate photos
+            photoMeshes.forEach((photo, index) => {
+                if (photo.userData) {
+                    // Floating motion
+                    photo.position.y = photo.userData.originalY + Math.sin(time * 0.5 + photo.userData.floatOffset) * 3;
+                    
+                    // Slow rotation around sun
+                    photo.userData.angle += photo.userData.speed;
+                    photo.position.x = Math.cos(photo.userData.angle) * photo.userData.radius;
+                    photo.position.z = Math.sin(photo.userData.angle) * photo.userData.radius;
+                    
+                    // Always face camera
+                    photo.lookAt(camera.position);
+                    
+                    // Update glow position
+                    if (photo.userData.glow) {
+                        photo.userData.glow.position.copy(photo.position);
+                        photo.userData.glow.position.z -= 0.1;
+                        photo.userData.glow.lookAt(camera.position);
+                    }
+                    
+                    // Update frame position
+                    if (photo.userData.frame) {
+                        photo.userData.frame.position.copy(photo.position);
+                        photo.userData.frame.position.z -= 0.05;
+                        photo.userData.frame.lookAt(camera.position);
+                    }
+                }
+            });
+            
+            // Rotate particles slowly
+            if (particles) {
+                particles.rotation.y += 0.0002;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Start experience
+        document.getElementById('start-overlay').addEventListener('click', function() {
+            this.style.display = 'none';
+            
+            // Initialize 3D scene
+            init();
+            
+            // Play music
+            audio = new Audio(musicUrl);
+            audio.loop = true;
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log('Audio autoplay blocked:', e));
+        });
+    </script>
+</body>
+</html>
